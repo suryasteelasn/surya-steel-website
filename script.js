@@ -29,7 +29,7 @@ document.querySelectorAll('a[href^="#"]').forEach(a => a.addEventListener("click
 }))
 logo?.addEventListener("click", e => { e.preventDefault(); window.scrollTo({ top: 0, behavior: "smooth" }) })
 
-const savedTheme = localStorage.getItem("theme") || "light"
+const savedTheme = localStorage.getItem("theme") || "dark"
 html.setAttribute("data-theme", savedTheme)
 icon.className = savedTheme === "dark" ? "uil uil-sun" : "fas fa-moon"
 
@@ -132,4 +132,5 @@ viewMoreBtn?.addEventListener("click", () => {
   const label = viewMoreBtn.querySelector(".view-more-label")
   if (label) label.textContent = expanded ? "View Less" : "View More"
   setTimeout(() => expanded ? window.scrollTo({ top: services.getBoundingClientRect().top + window.scrollY + services.querySelector("h2").offsetHeight + 10, behavior: "smooth" }) : services.scrollIntoView({ behavior: "smooth", block: "start" }), 100)
+
 })
