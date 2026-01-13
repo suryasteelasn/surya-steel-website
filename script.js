@@ -132,5 +132,4 @@ viewMoreBtn?.addEventListener("click", () => {
   const label = viewMoreBtn.querySelector(".view-more-label")
   if (label) label.textContent = expanded ? "View Less" : "View More"
   setTimeout(() => expanded ? window.scrollTo({ top: services.getBoundingClientRect().top + window.scrollY + services.querySelector("h2").offsetHeight + 10, behavior: "smooth" }) : services.scrollIntoView({ behavior: "smooth", block: "start" }), 100)
-
 })
