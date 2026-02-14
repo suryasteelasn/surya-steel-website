@@ -13,12 +13,14 @@ const hamburger = document.querySelector(".hamburger"),
   services = document.getElementById("services"),
   nav = document.querySelector("nav"),
   phoneLink = document.getElementById("phone-link"),
-  emailLink = document.getElementById("email-link")
+  emailLink = document.getElementById("email-link"),
+  carouselDotsContainer = document.querySelector(".carousel-dots")
 
-let currentIndex = 0, autoScroll, touchStartX = 0, touchEndX = 0
+let currentIndex = 0, autoScroll, touchStartX = 0, touchEndX = 0, carouselPaused = false
 const totalItems = carouselItems.length
 const closeNav = () => { hamburger.classList.remove("active"); floatingNavbar.classList.remove("active") }
 const getItemsPerSlide = () => window.innerWidth >= 768 ? 3 : 1
+const isMobile = () => window.innerWidth < 768
 
 hamburger.addEventListener("click", () => { hamburger.classList.toggle("active"); floatingNavbar.classList.toggle("active") })
 document.querySelectorAll(".nav-link").forEach(i => i.addEventListener("click", closeNav))
@@ -59,11 +61,30 @@ const startCounters = () => document.querySelectorAll(".counter").forEach(counte
 
 new IntersectionObserver((e, o) => { if (e[0].isIntersecting) { startCounters(); o.unobserve(document.querySelector(".about")) } }).observe(document.querySelector(".about"))
 
+// Generate carousel dots for mobile
+function generateDots() {
+  if (!carouselDotsContainer) return
+  carouselDotsContainer.innerHTML = ""
+  for (let i = 0; i < totalItems; i++) {
+    const dot = document.createElement("button")
+    dot.className = "carousel-dot" + (i === 0 ? " active" : "")
+    dot.addEventListener("click", () => { stopAuto(); currentIndex = i; updateCarousel(); updateDots(); startAuto() })
+    carouselDotsContainer.appendChild(dot)
+  }
+}
+
+function updateDots() {
+  if (!carouselDotsContainer) return
+  const dots = carouselDotsContainer.querySelectorAll(".carousel-dot")
+  dots.forEach((dot, i) => dot.classList.toggle("active", i === currentIndex % totalItems))
+}
+
 function updateCarousel() {
   const perSlide = getItemsPerSlide(), width = 100 / perSlide
   carousel.innerHTML = ""
   for (let i = 0; i < perSlide * 2 + totalItems; i++) carousel.appendChild(carouselItems[i % totalItems].cloneNode(true))
   carousel.style.transform = `translateX(-${(currentIndex + perSlide) * width}%)`
+  updateDots()
 }
 
 function showNext() {
@@ -89,14 +110,38 @@ function showPrev() {
 const startAuto = () => autoScroll = setInterval(showNext, 2000)
 const stopAuto = () => clearInterval(autoScroll)
 
-nextBtn.addEventListener("click", () => { stopAuto(); showNext(); startAuto() })
-prevBtn.addEventListener("click", () => { stopAuto(); showPrev(); startAuto() })
+prevBtn?.addEventListener("click", () => { stopAuto(); showPrev(); startAuto() })
+nextBtn?.addEventListener("click", () => { stopAuto(); showNext(); startAuto() })
 startAuto()
 
 window.innerWidth >= 768 ? (carousel.addEventListener("mouseenter", stopAuto), carousel.addEventListener("mouseleave", startAuto)) : carousel.addEventListener("touchstart", stopAuto)
-carousel.addEventListener("touchstart", e => { touchStartX = e.changedTouches[0].screenX; stopAuto() })
-carousel.addEventListener("touchend", e => { touchEndX = e.changedTouches[0].screenX; touchEndX < touchStartX ? showNext() : touchEndX > touchStartX && showPrev(); startAuto() })
+
+// Mobile swipe + tap to pause/enlarge
+carousel.addEventListener("touchstart", e => { touchStartX = e.changedTouches[0].screenX })
+carousel.addEventListener("touchend", e => {
+  touchEndX = e.changedTouches[0].screenX
+  const diff = touchStartX - touchEndX
+  if (Math.abs(diff) > 30) { diff > 0 ? showNext() : showPrev(); startAuto() }
+})
+
+// Mobile tap to pause/enlarge carousel
+if (isMobile()) {
+  carousel.addEventListener("click", e => {
+    const item = e.target.closest(".carousel-item")
+    if (!item) return
+    if (carouselPaused) {
+      document.querySelectorAll(".carousel-item").forEach(i => i.classList.remove("enlarged"))
+      carouselPaused = false; startAuto()
+    } else {
+      stopAuto(); carouselPaused = true
+      document.querySelectorAll(".carousel-item").forEach(i => i.classList.remove("enlarged"))
+      item.classList.add("enlarged")
+    }
+  })
+}
+
 window.addEventListener("resize", () => { stopAuto(); updateCarousel(); startAuto() })
+generateDots()
 updateCarousel()
 
 const animationManager = {
@@ -133,3 +178,45 @@ viewMoreBtn?.addEventListener("click", () => {
   if (label) label.textContent = expanded ? "View Less" : "View More"
   setTimeout(() => expanded ? window.scrollTo({ top: services.getBoundingClientRect().top + window.scrollY + services.querySelector("h2").offsetHeight + 10, behavior: "smooth" }) : services.scrollIntoView({ behavior: "smooth", block: "start" }), 100)
 })
+
+// Mobile collapse/expand buttons with localStorage persistence
+document.addEventListener("DOMContentLoaded", () => {
+  const collapseArrow = document.querySelector(".mobile-collapse-arrow")
+  const floatingButtons = document.querySelector(".mobile-floating-buttons")
+  if (collapseArrow && floatingButtons) {
+    floatingButtons.classList.add("no-transition")
+    const savedState = localStorage.getItem("floatingButtonsCollapsed")
+    if (savedState === "true") floatingButtons.classList.add("collapsed")
+    requestAnimationFrame(() => requestAnimationFrame(() => floatingButtons.classList.remove("no-transition")))
+    collapseArrow.addEventListener("click", e => {
+      e.preventDefault(); e.stopPropagation()
+      floatingButtons.classList.toggle("collapsed")
+      localStorage.setItem("floatingButtonsCollapsed", floatingButtons.classList.contains("collapsed"))
+    })
+  }
+})
+
+// Mobile navbar section color adaptation
+function updateNavbarColor() {
+  if (!isMobile()) { nav.className = ""; return }
+  const heroHeight = window.innerHeight
+  const scrollY = window.scrollY
+  const sections = [
+    { id: "about", el: document.getElementById("about") },
+    { id: "services", el: document.getElementById("services") },
+    { id: "gallery", el: document.getElementById("gallery") },
+    { id: "contact", el: document.getElementById("contact") }
+  ]
+  nav.className = ""
+  if (scrollY < heroHeight - 80) return // Still in hero - keep transparent
+  for (const { id, el } of sections) {
+    if (el) {
+      const top = el.getBoundingClientRect().top + scrollY
+      const bottom = top + el.offsetHeight
+      if (scrollY + 100 >= top && scrollY + 100 < bottom) { nav.classList.add("nav-" + id); break }
+    }
+  }
+}
+window.addEventListener("scroll", updateNavbarColor)
+window.addEventListener("resize", updateNavbarColor)
+updateNavbarColor()
