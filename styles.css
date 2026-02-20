@@ -383,7 +383,7 @@ footer p { position: relative; z-index: 2; font-size: 1rem; opacity: 0.9; color:
   .carousel-container { padding: 0.3rem; }
   .carousel-item { padding: 5px; }
   .contact { padding: calc(var(--nav-height)) 0 0 0; height: auto; min-height: 100vh; display: flex; flex-direction: column; }
-  .contact .section-content-wrapper { flex: 1; display: flex; flex-direction: column; padding: 1rem 1rem 0; }
+  .contact .section-content-wrapper { flex: 1; display: flex; flex-direction: column; padding: 0rem 1rem 0rem 1rem; }
   .contact .section-content-wrapper > h2 { font-size: 1.8rem; margin: 0 0 1rem; flex-shrink: 0; }
   .contact-content { grid-template-columns: 1fr; gap: 0.8rem; max-height: none; overflow: visible; padding-right: 0; flex: 1; }
   .contact-info, .contact-form { padding: 1rem 1.2rem; border-radius: 12px; }
@@ -438,4 +438,5 @@ footer p { position: relative; z-index: 2; font-size: 1rem; opacity: 0.9; color:
   .brand-text { font-size: clamp(3.5rem, 22vw, 6rem); line-height: 0.9; }
   .hero-text-overlay .cta-btn { width: 130px; height: 34px; font-size: 13px; padding: 7px 16px; }
 }
+
 
